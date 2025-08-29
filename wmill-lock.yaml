@@ -1,0 +1,9 @@
+locks:
+  u/intkilauakhyaari/righteous_flow.flow:
+    __flow_hash: 3708b7de3cd1ea530ea7a60d3e5113ef8d908ee514c1d8e048079003f91fc7ef
+    job_dataset.inline_script.py: 707a27966516fe44926805baa234b32d4df56d1a597d6ef49e4b30fc33a4746c
+    load_to_sheet.inline_script.ts: 6bccbeb0b1409f188e57353633b501243ca73d0e34154dc2eac9f966f7cdefbd
+    log_run.inline_script.ts: fa512b025a5a9c8b50fd62f3d3a7e6485da75932781a7e65a17960e2ad560528
+    setup_gsheet.inline_script.ts: 2a7cfd92606c9504219a8bf00d92dad811fda8fe3af1d2f0e28d1b661ab39478
+    user_dataset.inline_script.py: b6cb7da76b3ce033c26bffd28185bfae86f6d9389b96ce9bd750fb9b874012ad
+    weather_dataset.inline_script.py: 7e92191cde9c91229e8bc06c624080b0010c6d995d8803d1765bb3b629864855

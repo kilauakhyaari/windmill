@@ -1,0 +1,181 @@
+summary: extract data
+description: ""
+value:
+  modules:
+    - id: setup_sheet
+      summary: Setup Gsheet
+      value:
+        type: rawscript
+        content: "!inline setup_gsheet.inline_script.ts"
+        input_transforms:
+          create_tabs:
+            type: static
+            value: true
+          gsheets_auth:
+            type: static
+            value: $res:u/intkilauakhyaari/self_sufficient_gsheets
+          sheet_id:
+            type: static
+            value: 1g6JKXRwKQR2DWWsd0iEbtxomknK7YIDFC8nY1I4HGdQ
+        assets: []
+        lock: "!inline setup_gsheet.inline_script.lock"
+        language: bun
+    - id: dataset_type
+      summary: ""
+      value:
+        type: branchone
+        branches:
+          - summary: job
+            modules:
+              - id: job
+                summary: job dataset
+                value:
+                  type: rawscript
+                  content: "!inline job_dataset.inline_script.py"
+                  input_transforms:
+                    record_limit:
+                      type: javascript
+                      value: null
+                      expr: flow_input["limit data quantity"]
+                  assets: []
+                  lock: "!inline job_dataset.inline_script.lock"
+                  language: python3
+            expr: flow_input.Dataset == "job"
+            parallel: true
+            skip_failure: true
+          - summary: user
+            modules:
+              - id: user
+                summary: user dataset
+                value:
+                  type: rawscript
+                  content: "!inline user_dataset.inline_script.py"
+                  input_transforms:
+                    record_limit:
+                      type: static
+                      value: 10
+                  assets: []
+                  lock: "!inline user_dataset.inline_script.lock"
+                  language: python3
+            expr: flow_input.Dataset == "user"
+            parallel: true
+            skip_failure: true
+          - summary: weather
+            modules:
+              - id: weather
+                summary: weather dataset
+                value:
+                  type: rawscript
+                  content: "!inline weather_dataset.inline_script.py"
+                  input_transforms:
+                    record_limit:
+                      type: static
+                      value: 5
+                  assets: []
+                  lock: "!inline weather_dataset.inline_script.lock"
+                  language: python3
+            expr: flow_input.Dataset == "weather"
+            parallel: true
+            skip_failure: true
+        default: []
+    - id: load_to_sheet
+      summary: load to sheet
+      value:
+        type: rawscript
+        content: "!inline load_to_sheet.inline_script.ts"
+        input_transforms:
+          gsheets_auth:
+            type: static
+            value: $res:u/intkilauakhyaari/self_sufficient_gsheets
+          include_headers:
+            type: static
+            value: false
+          records:
+            type: javascript
+            expr: results.dataset_type.records
+          sheet_id:
+            type: javascript
+            expr: "`${results.setup_sheet.sheet_id}`"
+          sheet_tab:
+            type: javascript
+            expr: "`${flow_input.Dataset}_data`"
+        assets: []
+        lock: "!inline load_to_sheet.inline_script.lock"
+        language: bun
+    - id: log_run
+      summary: log run
+      value:
+        type: rawscript
+        content: "!inline log_run.inline_script.ts"
+        input_transforms:
+          dataset:
+            type: javascript
+            expr: flow_input.Dataset
+          execution_time_ms:
+            type: javascript
+            expr: results.dataset_type.execution_time_ms
+          gsheets_auth:
+            type: static
+            value: $res:u/intkilauakhyaari/self_sufficient_gsheets
+          records_processed:
+            type: javascript
+            expr: results.job.record_count
+          sheet_id:
+            type: javascript
+            expr: "`${results.setup_sheet.sheet_id}`"
+          status:
+            type: javascript
+            expr: results.load_to_sheet.status
+        assets: []
+        lock: "!inline log_run.inline_script.lock"
+        language: bun
+  failure_module:
+    id: failure
+    value:
+      type: rawscript
+      content: >
+        
+        export async function main(message: string, name: string, step_id:
+        string) {
+          const flow_id = process.env.WM_ROOT_FLOW_JOB_ID
+          console.log("message", message)
+          console.log("name",name)
+          console.log("step_id", step_id)
+          return { message, flow_id, step_id, recover: false }
+        }
+      input_transforms:
+        name:
+          type: javascript
+          expr: error.name
+        message:
+          type: javascript
+          expr: error.message
+        step_id:
+          type: javascript
+          expr: error.step_id
+      language: bun
+schema:
+  $schema: https://json-schema.org/draft/2020-12/schema
+  type: object
+  order:
+    - Dataset
+    - limit data quantity
+  properties:
+    Dataset:
+      type: string
+      description: ""
+      default: ""
+      enum:
+        - job
+        - weather
+        - user
+      enumLabels: {}
+      nullable: false
+    limit data quantity:
+      type: number
+      description: ""
+      min: 1
+      nullable: false
+  required:
+    - Dataset
+    - limit data quantity
